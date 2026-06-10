@@ -409,6 +409,27 @@ export class Client {
     this.playerStates.black.time = blackTime.totalTime + blackTime.increment;
     this.playerStates.white.time = whiteTime.totalTime + whiteTime.increment;
 
+    // 各プレイヤーの持ち時間を再構築する際、何手分の消費時間を計算から除外（スキップ）するかを制御する。
+    const skipSetting = this._settings.skipUpdateTimeInGameSummary ?? "no";
+    let skipFirstMoves: number;
+    if (skipSetting === "no") {
+      skipFirstMoves = 0;
+    } else if (skipSetting === "all") {
+      skipFirstMoves = Number.POSITIVE_INFINITY;
+    } else {
+      const n = Number(skipSetting);
+      if (Number.isInteger(n) && n >= 0) {
+        skipFirstMoves = n;
+      } else {
+        this.logger.warn(
+          "sid=%d: invalid skipUpdateTimeInGameSummary value %s; falling back to 'no'",
+          this.sessionID,
+          skipSetting,
+        );
+        skipFirstMoves = 0;
+      }
+    }
+
     // 途中から再開する場合に、前回消費した時間を計算する。
     const record = importCSA(this.gameSummary.position);
     if (record instanceof Error) {
@@ -416,8 +437,14 @@ export class Client {
       this.logout();
       return;
     }
+    let gameSummaryMoveIndex = 0;
     for (const entry of record.moves) {
       if (isKnownSpecialMove(entry.move) && entry.move.type === SpecialMoveType.START) {
+        continue;
+      }
+      const skip = gameSummaryMoveIndex < skipFirstMoves;
+      gameSummaryMoveIndex++;
+      if (skip) {
         continue;
       }
       const color = reverseColor(entry.nextColor);
