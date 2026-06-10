@@ -110,6 +110,15 @@ server:
     initialDelay: 40
     # 送信間隔 (秒)
     interval: 40
+  # Game_Summary の消費時間スキップ設定 (オプショナル)
+  #   対局開始時に各プレイヤーの持ち時間を再構築する際、Game_Summary の位置（局面）
+  #   ブロックにある着手のうち、何手分の消費時間を計算から除外（スキップ）するかを制御します。
+  #   なお、この設定は対局開始時に一度だけ与えられる Increment には影響せず、持ち時間は
+  #   常に Total_Time + Increment からスタートします。
+  #     no (省略時のデフォルト): すべての Game_Summary の着手時間を計算に含めます（オリジナルと同じ挙動）。
+  #     all                   : すべての Game_Summary の着手をスキップします。
+  #     <n> (n >= 0)          : 最初の n 手分をスキップします。
+  skipUpdateTimeInGameSummary: "no"
 
 # 対局回数
 repeat: 1

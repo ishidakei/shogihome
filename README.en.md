@@ -1,3 +1,10 @@
+## Fork Notes
+
+This fork adds the `skipUpdateTimeInGameSummary` option to the usi-csa-bridge.
+See [the usi-csa-bridge README](src/command/usi-csa-bridge/README.md) for details.
+
+---
+
 <img width="200" src="./docs/icon.png" />
 
 # ShogiHome

@@ -1,3 +1,10 @@
+## 本フォークの変更点
+
+本フォークでは、usi-csa-bridge に `skipUpdateTimeInGameSummary` オプションを追加した。
+詳細は [usi-csa-bridge の README](src/command/usi-csa-bridge/README.md) を参照。
+
+---
+
 <img width="200" src="./docs/icon.png" />
 
 # ShogiHome
