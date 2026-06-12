@@ -73,6 +73,9 @@ argParser.parse();
 // --------------------------------------------------------------------------------
 
 import { preload } from "@/command/common/preload";
+// 対局用エンジンが予期せず終了したときにブリッジを終了させるかどうか。
+// 設定ファイルから読み込むため、設定ファイル読み込み後に main() で上書きする。
+let exitOnEngineUnexpectedClose = false;
 preload({
   appLogFile: enableAppLogFile() || enableAllLogFile(),
   usiLogFile: enableUSILogFile() || enableAllLogFile(),
@@ -80,6 +83,20 @@ preload({
   stdoutLog: !disableStdoutLog(),
   logLevel: logLevel() as LogLevel,
   language: language() as Language,
+  // 対局用エンジンのプロセスが予期せず終了した場合に呼ばれる。設定ファイルの値は
+  // preload より後に読み込まれるため、ハンドラは常に登録しておき、実行時に
+  // exitOnEngineUnexpectedClose を見て挙動を切り替える。
+  onUSIEngineUnexpectedClose: (sessionID) => {
+    // 無効 (デフォルト) の場合は従来どおり、(engine.ts 側の) エラーログ出力のみで動作を継続する。
+    if (!exitOnEngineUnexpectedClose) {
+      return;
+    }
+    // エンジンプロセスが予期せず終了した場合、ブリッジを生かしておくとサーバーに
+    // ログインしたまま指し手を送れない状態になり、時間切れまで気付けない。
+    // 即座に異常終了して、上位のスーパーバイザー(systemd 等)の再起動に委ねる。
+    getAppLogger().error(`usi engine process closed unexpectedly: sid=${sessionID}. exiting.`);
+    process.exit(2);
+  },
 });
 
 // --------------------------------------------------------------------------------
@@ -140,6 +157,9 @@ async function main() {
   cliSettings.server.password = password() || cliSettings.server.password;
   cliSettings.saveRecordFile = saveRecordFile() || cliSettings.saveRecordFile;
   cliSettings.repeat = repeat() || cliSettings.repeat;
+
+  // 設定ファイルで指定された場合、対局用エンジンの予期しない終了時にブリッジを終了させます。
+  exitOnEngineUnexpectedClose = cliSettings.exitOnEngineUnexpectedClose ?? false;
 
   // USIエンジンが見つからない場合は、設定ファイルからの相対パスとみなして探します。
   if (configFilePath && !(await exists(cliSettings.usi.path))) {

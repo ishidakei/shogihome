@@ -26,6 +26,8 @@ interface Handlers {
     launchTimeMs: number,
   ): void;
   sendPromptCommand(sessionID: number, command: Command): void;
+  // 対局用エンジン (setupPlayer) のプロセスが quit を経由せずに終了した場合に呼ばれる。
+  onUSIEngineUnexpectedClose?(sessionID: number): void;
 }
 
 let h: Handlers | undefined;
@@ -318,9 +320,12 @@ export function setupPlayer(engine: USIEngine, options?: USIEngineLaunchOptions)
   sessions.set(sessionID, session);
   return new Promise<number>((resolve, reject) => {
     process
-      .on("close", () => {
+      .on("close", (unexpected) => {
         updateStatsOnClose(sessionID);
         h?.onEngineProcessStats(sessionID, engine.uri, session.stats, session.createdMs);
+        if (unexpected) {
+          h?.onUSIEngineUnexpectedClose?.(sessionID);
+        }
         setTimeout(() => {
           sessions.delete(sessionID);
         }, sessionRemoveDelay);

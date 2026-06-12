@@ -1,7 +1,10 @@
 ## Fork Notes
 
-This fork adds the `skipUpdateTimeInGameSummary` option to the usi-csa-bridge.
+This fork adds the following options to the usi-csa-bridge.
 See [the usi-csa-bridge README](src/command/usi-csa-bridge/README.md) for details.
+
+- `skipUpdateTimeInGameSummary`: Controls how many moves' elapsed time from the Game_Summary position block are excluded (skipped) when reconstructing each player's remaining time at the start of a game.
+- `exitOnEngineUnexpectedClose`: Makes the bridge log an error and exit with code 2 when a USI engine process for the game closes without a `quit` command. Intended to be combined with a supervisor such as systemd that restarts the bridge.
 
 ---
 

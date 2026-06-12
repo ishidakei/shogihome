@@ -419,6 +419,8 @@ type Config = {
   stdoutLog: boolean;
   logLevel: LogLevel;
   language: Language;
+  // 対局用エンジンのプロセスが予期せず終了した場合に呼ばれる。
+  onUSIEngineUnexpectedClose?: (sessionID: number) => void;
 };
 
 export function preload(config: Config) {
@@ -441,6 +443,7 @@ export function preload(config: Config) {
     ...usi,
     onEngineProcessStats: () => {},
     sendPromptCommand: () => {},
+    onUSIEngineUnexpectedClose: config.onUSIEngineUnexpectedClose,
   });
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const csa = require("@/renderer/game/csa.js");
