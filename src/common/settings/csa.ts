@@ -385,6 +385,7 @@ export type CSAGameSettingsForCLI = {
   repeat: number;
   autoRelogin: boolean;
   restartPlayerEveryGame: boolean;
+  exitOnEngineUnexpectedClose?: boolean;
   searchCommentFormat?: SearchCommentFormat;
 };
 

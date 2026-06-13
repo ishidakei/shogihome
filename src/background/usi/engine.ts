@@ -122,7 +122,7 @@ function parseInfoCommand(args: string): USIInfoCommand {
 
 type ErrorCallback = (e: Error) => void;
 type TimeoutCallback = () => void;
-type CloseCallback = () => void;
+type CloseCallback = (unexpected: boolean) => void;
 type USIOKCallback = () => void;
 type ReadyCallback = (readyTimeMs: number) => void;
 type BestmoveCallback = (position: string, move: string, ponder?: string) => void;
@@ -581,14 +581,16 @@ export class EngineProcess {
       code,
       signal,
     );
-    if (this.state !== State.WillQuit) {
+    // quit() を経由しない終了は予期しないエンジンの死を意味する。
+    const unexpected = this.state !== State.WillQuit;
+    if (unexpected) {
       this.errorCallback?.(new Error("closed unexpectedly"));
     }
     this._state = State.QuitCompleted;
     this.clearLaunchTimeout();
     this.clearQuitTimeout();
     this.process = null;
-    this.closeCallback?.();
+    this.closeCallback?.(unexpected);
     const command = newCommand(CommandType.SYSTEM, `closed: close=${code} signal=${signal}`);
     this.updateCommendHistory(command);
     this.commandCallback?.(command);

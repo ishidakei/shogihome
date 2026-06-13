@@ -1,7 +1,10 @@
 ## 本フォークの変更点
 
-本フォークでは、usi-csa-bridge に `skipUpdateTimeInGameSummary` オプションを追加した。
+本フォークでは、usi-csa-bridge に以下のオプションを追加した。
 詳細は [usi-csa-bridge の README](src/command/usi-csa-bridge/README.md) を参照。
+
+- `skipUpdateTimeInGameSummary`: 対局開始時に各プレイヤーの持ち時間を再構築する際、Game_Summary の局面ブロックにある着手のうち、何手分の消費時間を計算から除外（スキップ）するかを制御する。
+- `exitOnEngineUnexpectedClose`: 対局用の USI エンジンのプロセスが `quit` によらず終了した場合に、ブリッジがエラーログを出力して終了コード 2 で終了する。systemd などのスーパーバイザーによる再起動運用を想定している。
 
 ---
 
