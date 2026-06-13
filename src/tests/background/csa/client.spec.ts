@@ -746,6 +746,87 @@ describe("background/csa/client", () => {
     });
   });
 
+  it("skipUpdateTimeInGameSummary/all", async () => {
+    const settings = { ...csaServerSettings, skipUpdateTimeInGameSummary: "all" };
+    const client = new Client(123, settings, log4js.getLogger());
+    const clientHandlers = bindHandlers(client);
+    client.login();
+    const socketHandlers = mockSocket.mock.calls[0][2];
+    socketHandlers.onConnect();
+    socketHandlers.onRead("LOGIN:TestPlayer OK");
+    for (const line of mockGameSummaryWithMoves) {
+      socketHandlers.onRead(line);
+    }
+    client.agree("20150505-CSA25-3-5-7");
+    socketHandlers.onRead("START:20150505-CSA25-3-5-7");
+    expect(clientHandlers.mockOnStart).toBeCalledTimes(1);
+    // Every Game_Summary move skipped; init Increment still given => Total_Time + Increment.
+    expect(clientHandlers.mockOnStart.mock.calls[0][0]).toStrictEqual({
+      black: { time: 905 }, // 900 + 5
+      white: { time: 905 }, // 900 + 5
+    });
+  });
+
+  it("skipUpdateTimeInGameSummary/firstN", async () => {
+    const settings = { ...csaServerSettings, skipUpdateTimeInGameSummary: "2" };
+    const client = new Client(123, settings, log4js.getLogger());
+    const clientHandlers = bindHandlers(client);
+    client.login();
+    const socketHandlers = mockSocket.mock.calls[0][2];
+    socketHandlers.onConnect();
+    socketHandlers.onRead("LOGIN:TestPlayer OK");
+    for (const line of mockGameSummaryWithMoves) {
+      socketHandlers.onRead(line);
+    }
+    client.agree("20150505-CSA25-3-5-7");
+    socketHandlers.onRead("START:20150505-CSA25-3-5-7");
+    // Skip the first 2 moves (+T12 black, -T6 white); credit the rest. Init Increment given.
+    expect(clientHandlers.mockOnStart.mock.calls[0][0]).toStrictEqual({
+      black: { time: 905 }, // 905 + (5 - 5)
+      white: { time: 903 }, // 905 + (5 - 7)
+    });
+  });
+
+  it("skipUpdateTimeInGameSummary/zeroCreditsAllLikeNo", async () => {
+    const settings = { ...csaServerSettings, skipUpdateTimeInGameSummary: "0" };
+    const client = new Client(123, settings, log4js.getLogger());
+    const clientHandlers = bindHandlers(client);
+    client.login();
+    const socketHandlers = mockSocket.mock.calls[0][2];
+    socketHandlers.onConnect();
+    socketHandlers.onRead("LOGIN:TestPlayer OK");
+    for (const line of mockGameSummaryWithMoves) {
+      socketHandlers.onRead(line);
+    }
+    client.agree("20150505-CSA25-3-5-7");
+    socketHandlers.onRead("START:20150505-CSA25-3-5-7");
+    // n=0 skips nothing => identical to "no".
+    expect(clientHandlers.mockOnStart.mock.calls[0][0]).toStrictEqual({
+      black: { time: 898 }, // 905 + (5 - 12) + (5 - 5)
+      white: { time: 902 }, // 905 + (5 - 6) + (5 - 7)
+    });
+  });
+
+  it("skipUpdateTimeInGameSummary/invalidFallsBackToLegacy", async () => {
+    const settings = { ...csaServerSettings, skipUpdateTimeInGameSummary: "bogus" };
+    const client = new Client(123, settings, log4js.getLogger());
+    const clientHandlers = bindHandlers(client);
+    client.login();
+    const socketHandlers = mockSocket.mock.calls[0][2];
+    socketHandlers.onConnect();
+    socketHandlers.onRead("LOGIN:TestPlayer OK");
+    for (const line of mockGameSummaryWithMoves) {
+      socketHandlers.onRead(line);
+    }
+    client.agree("20150505-CSA25-3-5-7");
+    socketHandlers.onRead("START:20150505-CSA25-3-5-7");
+    // An invalid value falls back to "no": credit all moves.
+    expect(clientHandlers.mockOnStart.mock.calls[0][0]).toStrictEqual({
+      black: { time: 898 },
+      white: { time: 902 },
+    });
+  });
+
   it("timeUnit1msec", async () => {
     const client = new Client(123, csaServerSettings, log4js.getLogger());
     const clientHandlers = bindHandlers(client);

@@ -32,6 +32,7 @@ export type CSAServerSettings = {
   password: string;
   tcpKeepalive: TCPKeepaliveSettings;
   blankLinePing?: BlankLinePingSettings;
+  skipUpdateTimeInGameSummary?: string;
 };
 
 export type CSAGameSettings = {
